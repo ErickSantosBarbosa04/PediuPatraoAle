@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0"><i class="bi bi-journal-text me-2 text-primary"></i>Auditoria</h2>
+        <span class="text-muted small">Eventos mais recentes</span>
+    </div>
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr><th>Data e hora</th><th>Usuário</th><th>Operação</th><th>Entidade</th><th>Alterações</th><th>Justificativa</th></tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(eventos)}"><td colspan="6" class="text-center text-muted py-5">Nenhum evento de auditoria.</td></tr>
+                    <tr th:each="evento : ${eventos}">
+                        <td th:text="${evento.dataHora}"></td>
+                        <td><span th:text="${evento.usuario}"></span><br><small class="text-muted" th:text="${evento.perfil}"></small></td>
+                        <td th:text="${evento.operacao}"></td>
+                        <td><span th:text="${evento.entidade}"></span><br><small class="text-muted" th:text="${evento.entidadeId}"></small></td>
+                        <td>
+                            <ul class="mb-0 ps-3">
+                                <li th:each="campo : ${evento.campos}"
+                                    th:text="${campo.key + ': [' + campo.value.valorAnterior + '] → [' + campo.value.valorNovo + ']'}"></li>
+                            </ul>
+                        </td>
+                        <td th:text="${evento.justificativa == null ? '—' : evento.justificativa}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small">A consulta é somente leitura.</div>
+    </div>
+</div>
+</body>
+</html>

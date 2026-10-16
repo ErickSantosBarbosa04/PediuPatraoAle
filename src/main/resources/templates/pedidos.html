@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0"><i class="bi bi-bag me-2 text-primary"></i>Pedidos</h2>
+        <button th:if="${isAtendente or isGerente}" class="btn btn-primary" type="button"
+                data-bs-toggle="collapse" data-bs-target="#novoPedido">
+            <i class="bi bi-plus-lg me-1"></i>Novo Pedido
+        </button>
+    </div>
+
+    <div class="alert alert-success" th:if="${sucesso}" th:text="${sucesso}"></div>
+    <div class="alert alert-danger" th:if="${erro}" th:text="${erro}"></div>
+
+    <div th:if="${isAtendente or isGerente}" class="collapse mb-4"
+         id="novoPedido" th:classappend="${novoPedidoAberto} ? ' show' : ''">
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold">Registrar pedido</div>
+            <div class="card-body">
+                <form id="pedidoForm">
+                    <div class="mb-3">
+                        <label for="clientePedido" class="form-label">Cliente</label>
+                        <select id="clientePedido" class="form-select" required>
+                            <option value="">Selecione um cliente</option>
+                            <option th:each="cliente : ${clientes}" th:value="${cliente.id}"
+                                    th:text="${cliente.nome + ' — ' + cliente.telefone}"></option>
+                        </select>
+                    </div>
+                    <div id="itensPedido">
+                        <div class="row g-2 align-items-end item-pedido mb-2">
+                            <div class="col-md-8">
+                                <label class="form-label">Produto</label>
+                                <select class="form-select produto-pedido" required>
+                                    <option value="">Selecione um produto</option>
+                                    <option th:each="produto : ${produtos}" th:value="${produto.id}"
+                                            th:text="${produto.nome + ' — R$ ' + #numbers.formatDecimal(produto.preco, 1, 'COMMA', 2, 'POINT')}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label">Quantidade</label>
+                                <input class="form-control quantidade-pedido" type="number" min="1" value="1" required>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-outline-danger w-100 remover-item" type="button" aria-label="Remover item">Remover</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2 mt-3">
+                        <button id="adicionarItem" type="button" class="btn btn-outline-secondary">Adicionar item</button>
+                        <button type="submit" class="btn btn-success"
+                                th:disabled="${#lists.isEmpty(clientes) or #lists.isEmpty(produtos)}">Registrar pedido</button>
+                    </div>
+                    <p class="text-muted small mt-2 mb-0">Preços e total são conferidos e calculados pelo servidor.</p>
+                    <div class="alert alert-warning mt-3 mb-0" th:if="${#lists.isEmpty(clientes) or #lists.isEmpty(produtos)}">
+                        Cadastre ao menos um cliente e um produto ativo antes de registrar pedidos.
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th><th>Cliente</th><th>Itens</th><th>Entrada</th>
+                        <th>Responsável</th><th>Subtotal</th><th>Desconto</th><th>Total</th><th>Status</th>
+                        <th th:if="${isGerente}">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(pedidos)}">
+                        <td th:colspan="${isGerente ? 10 : 9}" class="text-center text-muted py-5">Nenhum pedido encontrado.</td>
+                    </tr>
+                    <tr th:each="pedido : ${pedidos}">
+                        <td class="text-muted" th:text="${pedido.id}"></td>
+                        <td th:text="${pedido.clienteId}"></td>
+                        <td>
+                            <ul th:if="${pedido.itens != null and !pedido.itens.isEmpty()}" class="mb-0 ps-3">
+                                <li th:each="item : ${pedido.itens}"
+                                    th:text="${item.quantidade + ' × ' + item.nomeProduto}"></li>
+                            </ul>
+                            <span th:if="${pedido.itens == null or pedido.itens.isEmpty()}"
+                                  th:text="${pedido.quantidade + ' × ' + (pedido.sabor == null ? pedido.tipoPizza : pedido.sabor)}"></span>
+                        </td>
+                        <td th:text="${pedido.dataHoraEntrada}"></td>
+                        <td th:text="${pedido.responsavelRegistro}"></td>
+                        <td th:text="${pedido.subtotal == null ? '—' : 'R$ ' + #numbers.formatDecimal(pedido.subtotal, 1, 'COMMA', 2, 'POINT')}"></td>
+                        <td th:text="${pedido.percentualDesconto == null ? '0%' : #numbers.formatDecimal(pedido.percentualDesconto, 1, 'COMMA', 2, 'POINT') + '%'}"></td>
+                        <td th:text="${pedido.valorTotal == null ? '—' : 'R$ ' + #numbers.formatDecimal(pedido.valorTotal, 1, 'COMMA', 2, 'POINT')}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${pedido.status == 'FINALIZADO' or pedido.status == 'ENTREGUE'} ? 'bg-success' : (${pedido.status == 'CANCELADO'} ? 'bg-danger' : (${pedido.status == 'EM_PREPARACAO' or pedido.status == 'EM_PREPARO'} ? 'bg-warning text-dark' : 'bg-secondary'))"
+                                  th:text="${pedido.status}"></span>
+                        </td>
+                        <td th:if="${isGerente}" class="text-nowrap">
+                            <button th:if="${pedido.status == 'RECEBIDO'}" class="btn btn-sm btn-outline-primary acao-status" th:attr="data-id=${pedido.id},data-status='EM_PREPARACAO'">Preparar</button>
+                            <button th:if="${pedido.status == 'EM_PREPARACAO' or pedido.status == 'EM_PREPARO'}" class="btn btn-sm btn-outline-primary acao-status" th:attr="data-id=${pedido.id},data-status='PRONTO'">Pronto</button>
+                            <button th:if="${pedido.status == 'PRONTO'}" class="btn btn-sm btn-outline-primary acao-status" th:attr="data-id=${pedido.id},data-status='SAIU_PARA_ENTREGA'">Saiu para entrega</button>
+                            <button th:if="${pedido.status == 'PRONTO'}" class="btn btn-sm btn-outline-primary acao-status" th:attr="data-id=${pedido.id},data-status='RETIRADO'">Retirado</button>
+                            <button th:if="${pedido.status == 'SAIU_PARA_ENTREGA' or pedido.status == 'RETIRADO'}" class="btn btn-sm btn-outline-success acao-status" th:attr="data-id=${pedido.id},data-status='FINALIZADO'">Finalizar</button>
+                            <button th:if="${pedido.status != 'CANCELADO' and pedido.status != 'FINALIZADO' and pedido.status != 'ENTREGUE' and pedido.status != 'SAIU_PARA_ENTREGA' and pedido.status != 'RETIRADO'}"
+                                    class="btn btn-sm btn-outline-warning aplicar-desconto" th:attr="data-id=${pedido.id}">Desconto</button>
+                            <button th:if="${pedido.status != 'CANCELADO' and pedido.status != 'FINALIZADO' and pedido.status != 'ENTREGUE' and pedido.status != 'SAIU_PARA_ENTREGA' and pedido.status != 'RETIRADO'}"
+                                    class="btn btn-sm btn-outline-danger cancelar-pedido" th:attr="data-id=${pedido.id}">Cancelar</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer text-muted small" th:if="${!#lists.isEmpty(pedidos)}"
+             th:text="${'Total: ' + #lists.size(pedidos) + ' pedido(s)'}"></div>
+    </div>
+
+    <script>
+        (() => {
+            const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+            const headers = {'Content-Type': 'application/json'};
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+            async function enviar(url, method, body) {
+                const response = await fetch(url, {method, headers, body: body === undefined ? undefined : JSON.stringify(body)});
+                if (!response.ok) {
+                    let detalhe = 'A operação não foi concluída.';
+                    try { const erro = await response.json(); detalhe = erro.detail || erro.message || detalhe; } catch (_) { }
+                    throw new Error(detalhe);
+                }
+                return response.status === 204 ? null : response.json();
+            }
+
+            const listaItens = document.getElementById('itensPedido');
+            document.getElementById('adicionarItem')?.addEventListener('click', () => {
+                const linha = listaItens.querySelector('.item-pedido').cloneNode(true);
+                linha.querySelector('.produto-pedido').value = '';
+                linha.querySelector('.quantidade-pedido').value = '1';
+                listaItens.appendChild(linha);
+            });
+            listaItens?.addEventListener('click', event => {
+                if (event.target.classList.contains('remover-item') && listaItens.querySelectorAll('.item-pedido').length > 1) {
+                    event.target.closest('.item-pedido').remove();
+                }
+            });
+
+            document.getElementById('pedidoForm')?.addEventListener('submit', async event => {
+                event.preventDefault();
+                const itens = [...listaItens.querySelectorAll('.item-pedido')].map(linha => ({
+                    produtoId: linha.querySelector('.produto-pedido').value,
+                    quantidade: Number(linha.querySelector('.quantidade-pedido').value)
+                }));
+                try {
+                    await enviar('/api/pedidos', 'POST', {clienteId: document.getElementById('clientePedido').value, itens});
+                    window.location.href = '/pedidos';
+                } catch (erro) { alert(erro.message); }
+            });
+
+            document.addEventListener('click', async event => {
+                const status = event.target.closest('.acao-status');
+                const desconto = event.target.closest('.aplicar-desconto');
+                const cancelamento = event.target.closest('.cancelar-pedido');
+                try {
+                    if (status) {
+                        const url = `/api/pedidos/${encodeURIComponent(status.dataset.id)}/status?status=${encodeURIComponent(status.dataset.status)}`;
+                        await enviar(url, 'PUT');
+                        window.location.reload();
+                    } else if (desconto) {
+                        const percentual = prompt('Percentual de desconto (máximo 20):');
+                        if (percentual === null) return;
+                        await enviar(`/api/pedidos/${encodeURIComponent(desconto.dataset.id)}/desconto`, 'PATCH', {percentual: Number(percentual.replace(',', '.'))});
+                        window.location.reload();
+                    } else if (cancelamento) {
+                        const justificativa = prompt('Justificativa obrigatória para o cancelamento:');
+                        if (justificativa === null) return;
+                        await enviar(`/api/pedidos/${encodeURIComponent(cancelamento.dataset.id)}/cancelamento`, 'POST', {justificativa});
+                        window.location.reload();
+                    }
+                } catch (erro) { alert(erro.message); }
+            });
+        })();
+    </script>
+</div>
+</body>
+</html>

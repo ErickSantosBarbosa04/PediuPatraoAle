@@ -52,5 +52,10 @@ As APIs usam a sessão autenticada do Spring Security. O CSRF permanece ativo pa
 | `DELETE /api/clientes/{id}` | `ADMIN` |
 | `GET /api/auditoria` | `ADMIN`, `GERENTE` |
 | `/api/usuarios/**` | `ADMIN` |
+| `GET /api/dashboard/resumo` | `ADMIN`, `GERENTE` |
 
 As rotas de consulta de produtos exigem autenticação; a gestão de produtos é restrita a `ADMIN` e `GERENTE`.
+
+## Dashboard administrativo
+
+O painel de vendas e operação está disponível em `/admin` para `ADMIN` e `GERENTE`. Ele consulta `GET /api/dashboard/resumo`, aceita filtros de data e status, e se atualiza automaticamente a cada 60 segundos. Requisitos, parâmetros, exemplos de respostas, regras de cálculo e cenários de validação estão em [`docs/dashboard-administrativo.md`](docs/dashboard-administrativo.md) e [`docs/evidencias-testes-dashboard.md`](docs/evidencias-testes-dashboard.md).

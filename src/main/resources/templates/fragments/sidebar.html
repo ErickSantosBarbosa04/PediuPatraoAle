@@ -10,6 +10,9 @@
             <li class="nav-item"><a class="nav-link sidebar-link" th:href="@{/pedidos}"><i class="bi bi-bag-fill me-2"></i>Pedidos</a></li>
             <li th:if="${isAdmin or isGerente}" class="sidebar-section-label d-none d-md-block mt-3">Gestão</li>
             <li class="nav-item" th:if="${isAdmin or isGerente}">
+                <a class="nav-link sidebar-link" th:href="@{/admin}"><i class="bi bi-bar-chart-line-fill me-2"></i>Dashboard</a>
+            </li>
+            <li class="nav-item" th:if="${isAdmin or isGerente}">
                 <a class="nav-link sidebar-link" th:href="@{/produtos}"><i class="bi bi-boxes me-2"></i>Produtos</a>
             </li>
             <li class="nav-item" th:if="${isAdmin}">

@@ -239,7 +239,7 @@ public class HomeController {
     }
 
     @GetMapping("/admin")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'GERENTE')")
     public String admin() {
         return "admin";
     }
